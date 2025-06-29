@@ -18,7 +18,7 @@ return new class extends Migration
             $table->char('Code');
             $table->integer('Year');
             //referenre FK to user role teacher
-            $table->foreignId('user_id')->references('id')->on('users');
+            $table->foreignId('class_teacher')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });
     }

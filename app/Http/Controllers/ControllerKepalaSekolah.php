@@ -11,7 +11,23 @@ class ControllerKepalaSekolah extends Controller
     //show list kelas
     public function showKelas()
     {
-        $data = Classroom::all();
+        $dataList = Classroom::all();
+
+        $data = $dataList->map(function ($kelas) {
+            return [
+                'id' => $kelas->id,
+                'grade' => $kelas->grade,
+                'code' => $kelas->code,
+                'year' => $kelas->year,
+                'class_teacher' => $kelas->homeTeacher ? $kelas->homeTeacher->name : null,
+                'students_count' => $kelas->students()->count(),
+                'created_at' => $kelas->created_at,
+                'updated_at' => $kelas->updated_at,
+                ];
+        });
+
+
+
         return response()->json([
             'status' => 'success',
             'data' => $data
@@ -24,8 +40,9 @@ class ControllerKepalaSekolah extends Controller
         //validasi input
         $request->validate([
             'grade' => 'required|integer|min:1|max:6',
-            'code' => 'required|integer|max:1',
+            'code' => 'required|string|size:1',
             'year' => 'required|integer',
+            'class_teacher' => 'nullable|exists:users,id'
         ]);
 
         //check apakah kelas sudah ada
@@ -34,13 +51,44 @@ class ControllerKepalaSekolah extends Controller
             ->where('year', $request->year)
             ->exists();
 
-        //jika kelas ada, return error
-        if ($existingClass) {
+            
+            //jika kelas ada, return error
+            if ($existingClass) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Kelas sudah ada'
+                ], 400);
+            }
+            
+            // Cek kalau ada class_teacher, pastikan dia role-nya wali kelas
+           if ($request->filled('class_teacher')) {
+               $user = User::find($request['class_teacher']);
+               if ($user->role !== 'wali_kelas') {
+                   return response()->json([
+                       'status' => 'error',
+                       'message' => 'User bukan wali kelas'
+                   ], 400);
+               }
+           }
+
+           // ✅ Kalau ada class_teacher, cek apakah usernya benar role wali_kelas
+    if (!empty($validated['class_teacher'])) {
+        $user = User::find($request['class_teacher']);
+
+        if (!$user) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Kelas sudah ada'
-            ], 400);
+                'message' => 'User tidak ditemukan'
+            ], 404);
         }
+
+        if ($user->role !== 'wali_kelas') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User yang dipilih bukan wali kelas'
+            ], 403);
+        }
+    }
 
         //create kelas baru
         $kelas = Classroom::create([
@@ -82,8 +130,8 @@ class ControllerKepalaSekolah extends Controller
     {
         $dataClass = Classroom::findOrFail($id);
 
-        //check kalau ada siswa gak bisa dihapus
-        if($dataClass->student()->exists()) {
+        // cek relasi siswa via method students()
+        if ($dataClass->students()->exists()) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Kelas tidak bisa dihapus karena masih ada siswa yang terdaftar'
@@ -91,6 +139,7 @@ class ControllerKepalaSekolah extends Controller
         }
 
         $dataClass->delete();
+
         return response()->json([
             'status' => 'success',
             'message' => 'Kelas berhasil dihapus'

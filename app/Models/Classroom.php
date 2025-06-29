@@ -10,7 +10,13 @@ class Classroom extends Model
         'grade',
         'year',
         'code',
+        'class_teacher'
     ];
+
+    public function homeTeacher()
+    {
+        return $this->belongsTo(User::class, 'class_teacher');
+    }
 
     public function students()
     {
