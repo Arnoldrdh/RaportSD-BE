@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classroom;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class ControllerKepalaSekolah extends Controller
@@ -63,7 +64,7 @@ class ControllerKepalaSekolah extends Controller
         //validasi input
         $request->validate([
             'grade' => 'required|integer|min:1|max:6',
-            'code' => 'required|integer|max:1',
+            'code' => 'required|integer|min:1|max:6',
             'year' => 'required|integer',
         ]);
 
@@ -81,7 +82,7 @@ class ControllerKepalaSekolah extends Controller
     {
         $dataClass = Classroom::findOrFail($id);
 
-        //kurang check kalau ada siswa gak bisa dihapus
+        //check kalau ada siswa gak bisa dihapus
         if($dataClass->student()->exists()) {
             return response()->json([
                 'status' => 'error',
@@ -95,4 +96,37 @@ class ControllerKepalaSekolah extends Controller
             'message' => 'Kelas berhasil dihapus'
         ], 200);
     }
+
+
+    //logic manajement murid
+
+    //tambah murid ke kelas
+    public function assignStudentToClass(Request $request)
+    {
+        $request->validate([
+            'class_id' => 'required|exists:school_classes,id',
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $class = Classroom::findOrFail($request->class_id);
+        $user = User::findOrFail($request->user_id);
+
+        // Cek apakah user adalah murid
+        if ($user->role !== 'siswa') {
+            return response()->json(['error' => 'User bukan siswa'], 403);
+        }
+
+        // Cek apakah sudah masuk kelas yang sama
+        if ($class->students()->where('users.id', $user->id)->exists()) {
+            return response()->json(['error' => 'Siswa sudah terdaftar di kelas ini'], 409);
+        }
+
+        // Masukkan siswa ke kelas
+        $class->students()->attach($user->id);
+
+        return response()->json(['message' => 'Siswa berhasil ditambahkan ke kelas'], 200);
+    }
+
+    //update murid di kelas (belum)
+
 }
