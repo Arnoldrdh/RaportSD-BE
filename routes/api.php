@@ -16,6 +16,8 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware(['auth:api', 'role:kepala_sekolah'])->prefix('kepala-sekolah')->group(function () {
 
+    Route::get('/teachers', [ControllerKepalaSekolah::class, 'listTeacher']);
+
     // Manajemen Kelas
     Route::get('/show-kelas', [ControllerKepalaSekolah::class, 'showKelas']); // lihat semua kelas
     Route::post('/kelas', [ControllerKepalaSekolah::class, 'addKelas']); // tambah kelas
