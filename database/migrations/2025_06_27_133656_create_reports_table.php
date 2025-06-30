@@ -16,9 +16,10 @@ return new class extends Migration
     {
         Schema::create('reports', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('period_id')->references('id')->on('perioda');
-            $table->foreignId('period_id')->references('id')->on('classrooms');
-            $table->foreignId('period_id')->references('id')->on('users');
+            $table->foreignId('period_id')->constrained('periods');
+            $table->foreignId('classroom_id')->constrained('classrooms');
+            $table->foreignId('user_id')->constrained('users');
+            $table->integer('score');
             $table->timestamps();
         });
     }

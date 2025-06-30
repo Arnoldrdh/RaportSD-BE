@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Classroom;
 use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -13,10 +12,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('class_students', function (Blueprint $table) {
+        Schema::create('classrooms', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->references('id')->on('users');
-            $table->foreignId('classroom_id')->references('id')->on('classrooms');
+            $table->integer('grade');
+            $table->char('code');
+            $table->integer('year');
+            //referenre FK to user role teacher
+            $table->foreignId('class_teacher')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });
     }
@@ -26,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('class_students');
+        Schema::dropIfExists('classrooms');
     }
 };
