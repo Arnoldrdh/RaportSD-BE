@@ -22,3 +22,15 @@ Route::get('/show-kelas', [ControllerKepalaSekolah::class, 'showKelas']);
 Route::post('/add-kelas', [ControllerKepalaSekolah::class, 'addKelas']);
 Route::put('/update-kelas/{id}', [ControllerKepalaSekolah::class, 'updateKelas']);
 Route::delete('/delete-kelas/{id}', [ControllerKepalaSekolah::class, 'deleteKelas']);
+
+//Wali kelas Geys
+Route::middleware('role:wali_kelas')->prefix('walikelas')->group(function () {
+    Route::get('/my-students', [WaliKelasController::class, 'getMyStudents']);
+    Route::get('/report', [WaliKelasController::class, 'getStudentReport']);
+    Route::post('/report/score', [WaliKelasController::class, 'saveScore']);
+});
+
+//Nek iki murid
+Route::middleware('role:siswa')->prefix('murid')->group(function () {
+    Route::get('/history', [MuridController::class, 'getReportHistory']);
+});
