@@ -3,18 +3,19 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ControllerKepalaSekolah;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+    return response()->json(Auth::user());
+})->middleware('auth:api');
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 
 Route::middleware(['auth:api', 'role:kepala_sekolah'])->prefix('kepala-sekolah')->group(function () {
-    
+
     // Manajemen Kelas
     Route::get('/show-kelas', [ControllerKepalaSekolah::class, 'showKelas']); // lihat semua kelas
     Route::post('/kelas', [ControllerKepalaSekolah::class, 'addKelas']); // tambah kelas
@@ -27,7 +28,6 @@ Route::middleware(['auth:api', 'role:kepala_sekolah'])->prefix('kepala-sekolah')
 
 Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
-    
 });
 
 // //buat testing aja
