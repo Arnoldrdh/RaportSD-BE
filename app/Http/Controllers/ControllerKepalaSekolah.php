@@ -124,7 +124,7 @@ class ControllerKepalaSekolah extends Controller
         //validasi input
         $request->validate([
             'grade' => 'required|integer|min:1|max:6',
-            'code' => 'required|integer|min:1|max:6',
+            'code' => 'required|string|size:1',
             'year' => 'required|integer',
         ]);
 

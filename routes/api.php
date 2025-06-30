@@ -22,8 +22,8 @@ Route::middleware(['auth:api', 'role:kepala_sekolah'])->prefix('kepala-sekolah')
     Route::get('/show-kelas', [ControllerKepalaSekolah::class, 'showKelas']); // lihat semua kelas
     Route::get('/kelas/{id}', [ControllerKepalaSekolah::class, 'getKelas']); // lihat kelas
     Route::post('/kelas', [ControllerKepalaSekolah::class, 'addKelas']); // tambah kelas
-    Route::put('/update/{id}', [ControllerKepalaSekolah::class, 'updateKelas']); // edit kelas
-    Route::delete('/delete/{id}', [ControllerKepalaSekolah::class, 'deleteKelas']); // hapus kelas
+    Route::put('/kelas/{id}', [ControllerKepalaSekolah::class, 'updateKelas']); // edit kelas
+    Route::delete('/kelas/{id}', [ControllerKepalaSekolah::class, 'deleteKelas']); // hapus kelas
 
     // Tambah route lain (mata pelajaran, periode, dll) bisa di sini
 });
