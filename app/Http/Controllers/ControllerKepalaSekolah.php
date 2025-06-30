@@ -36,6 +36,15 @@ class ControllerKepalaSekolah extends Controller
         ], 200);
     }
 
+    public function getKelas($id)
+    {
+        $data = Classroom::with(['homeTeacher'])->findOrFail($id);
+        return response()->json([
+            'status' => 'success',
+            'data' => $data
+        ], 200);
+    }
+
     //add kelas
     public function addKelas(Request $request)
     {
