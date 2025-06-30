@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ControllerKepalaSekolah;
+use App\Http\Controllers\WaliKelasController; 
+use App\Http\Controllers\MuridController; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

@@ -24,7 +24,6 @@ class MuridController extends Controller
             ], 200);
         }
 
-        // 4. Kembalikan data riwayat sebagai JSON.
         return response()->json(['data' => $history]);
     }
 }
