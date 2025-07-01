@@ -25,21 +25,22 @@ class AuthController extends Controller
             'password' => Hash::make($request->password)
         ]);
 
-        try {
-            $token = JWTAuth::fromUser($user);
-        } catch (JWTException $e) {
-            return response()->json(['error' => 'Could not create token'], 500);
-        }
-
-        return response()->json([
-            'token' => $token,
-            'user' => $user
-        ], 201);
+        return response()->json(['message' => 'User created successfully'], 201);
     }
 
     //login
     public function login(Request $request)
     {
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+        if ($user->role == null) {
+            return response()->json(['error' => 'User belum divalidasi, hubungi kepala sekolah'], 401);
+        }
+
         $credetentials = $request->only('email', 'password');
 
         try {

@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ControllerKepalaSekolah;
-use App\Http\Controllers\WaliKelasController; 
-use App\Http\Controllers\MuridController; 
+use App\Http\Controllers\WaliKelasController;
+use App\Http\Controllers\MuridController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +19,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware(['auth:api', 'role:kepala_sekolah'])->prefix('kepala-sekolah')->group(function () {
 
     Route::get('/teachers', [ControllerKepalaSekolah::class, 'listTeacher']);
+    Route::get('/unvalidated-users', [ControllerKepalaSekolah::class, 'listUnvalidatedUser']);
+    Route::patch('/users/{id}', [ControllerKepalaSekolah::class, 'updateUser']);
 
     // Manajemen Kelas
     Route::get('/show-kelas', [ControllerKepalaSekolah::class, 'showKelas']); // lihat semua kelas
@@ -30,18 +32,6 @@ Route::middleware(['auth:api', 'role:kepala_sekolah'])->prefix('kepala-sekolah')
     // Tambah route lain (mata pelajaran, periode, dll) bisa di sini
 });
 
-<<<<<<< HEAD
-
-Route::middleware('auth:api')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-});
-
-// //buat testing aja
-// Route::get('/show-kelas', [ControllerKepalaSekolah::class, 'showKelas']);
-// Route::post('/add-kelas', [ControllerKepalaSekolah::class, 'addKelas']);
-// Route::put('/update-kelas/{id}', [ControllerKepalaSekolah::class, 'updateKelas']);
-// Route::delete('/delete-kelas/{id}', [ControllerKepalaSekolah::class, 'deleteKelas']);
-=======
 //buat testing aja
 Route::get('/show-kelas', [ControllerKepalaSekolah::class, 'showKelas']);
 Route::post('/add-kelas', [ControllerKepalaSekolah::class, 'addKelas']);
@@ -59,4 +49,3 @@ Route::middleware('role:wali_kelas')->prefix('walikelas')->group(function () {
 Route::middleware('role:siswa')->prefix('murid')->group(function () {
     Route::get('/history', [MuridController::class, 'getReportHistory']);
 });
->>>>>>> nando
