@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('semester');
             $table->integer('year');
-            $table->boolean('is_active');
+            $table->enum('status', ['active', 'inactive'])->default('inactive');
             $table->timestamps();
         });
     }

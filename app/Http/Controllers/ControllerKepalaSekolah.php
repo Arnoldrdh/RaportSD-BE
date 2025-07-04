@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classroom;
+use App\Models\Period;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -177,5 +178,71 @@ class ControllerKepalaSekolah extends Controller
     }
 
     //update murid di kelas (belum)
+
+    //management periode
+     // GET /api/periods
+    public function index()
+    {
+        return response()->json([
+            'status' => 'success',
+            'data' => Period::all()
+        ]);
+    }
+
+    // POST /api/periods
+    public function store(Request $request)
+    {
+        $request->validate([
+            'year' => 'required|string',
+            'semester' => 'required|in:1,2',
+        ]);
+
+        $period = Period::create([
+            'year' => $request->year,
+            'semester' => $request->semester,
+            'status' => 'pending' // default
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Periode berhasil ditambahkan',
+            'data' => $period
+        ], 201);
+    }
+
+    // PUT /api/periods/{id}
+    public function update(Request $request, $id)
+    {
+        $period = Period::findOrFail($id);
+
+        if ($period->status === 'selesai') {
+            return response()->json(['message' => 'Periode sudah selesai dan tidak bisa diedit'], 403);
+        }
+
+        if ($request->status === 'aktif') {
+            // cek kalau sudah ada yang aktif
+            $exists = Period::where('status', 'aktif')->where('id', '!=', $period->id)->exists();
+            if ($exists) {
+                return response()->json(['message' => 'Hanya boleh ada 1 periode aktif'], 400);
+            }
+        }
+
+        $period->update($request->only('year', 'semester', 'status'));
+
+        return response()->json(['message' => 'Periode berhasil diperbarui']);
+    }
+
+    // DELETE /api/periods/{id}
+    public function destroy($id)
+    {
+        $period = Period::findOrFail($id);
+
+        if ($period->status !== 'pending') {
+            return response()->json(['message' => 'Hanya periode pending yang bisa dihapus'], 403);
+        }
+
+        $period->delete();
+        return response()->json(['message' => 'Periode berhasil dihapus']);
+    }
 
 }
