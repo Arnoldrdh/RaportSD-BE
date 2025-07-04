@@ -44,15 +44,3 @@ Route::middleware(['auth:api', 'role:kepala_sekolah'])->prefix('kepala-sekolah')
     Route::put('/periods/{id}', [ControllerKepalaSekolah::class, 'updatePeriod']); // edit status
     Route::delete('/periods/{id}', [ControllerKepalaSekolah::class, 'deletePeriod']); // hapus periode pending saja
 });
-
-//Wali kelas Geys
-Route::middleware('role:wali_kelas')->prefix('walikelas')->group(function () {
-    Route::get('/my-students', [WaliKelasController::class, 'getMyStudents']);
-    Route::get('/report', [WaliKelasController::class, 'getStudentReport']);
-    Route::post('/report/score', [WaliKelasController::class, 'saveScore']);
-});
-
-//Nek iki murid
-Route::middleware('role:siswa')->prefix('murid')->group(function () {
-    Route::get('/history', [MuridController::class, 'getReportHistory']);
-});
