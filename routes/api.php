@@ -19,8 +19,6 @@ Route::get('/all', [AuthController::class, 'getAllData']);
 Route::middleware(['auth:api', 'role:kepala_sekolah'])->prefix('kepala-sekolah')->group(function () {
 
     Route::get('/teachers', [ControllerKepalaSekolah::class, 'listTeacher']);
-    Route::get('/unvalidated-users', [ControllerKepalaSekolah::class, 'listUnvalidatedUser']);
-    Route::patch('/users/{id}', [ControllerKepalaSekolah::class, 'updateUser']);
 
     // 🏫 Manajemen Kelas
     Route::get('/show-kelas', [ControllerKepalaSekolah::class, 'showKelas']);
