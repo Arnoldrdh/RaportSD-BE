@@ -23,4 +23,9 @@ class Classroom extends Model
         return $this->belongsToMany(User::class, 'class_students', 'classroom_id', 'user_id')
             ->withTimestamps();
     }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class);
+    }
 }

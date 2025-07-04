@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Classroom;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Period;
@@ -18,12 +19,11 @@ class WaliKelasController extends Controller
         $waliKelas = Auth::user();
 
         // Ambil kelas yang diajar oleh wali kelas ini, lalu ambil daftar muridnya
-        $students = $waliKelas->taughtClass()
-                              ->with('students:id,name,email') // Eager load data murid
-                              ->first()
-                              ->students;
+        $classroom = Classroom::where('class_teacher', $waliKelas->id)->first();
 
-        return response()->json(['data' => $students]);
+        $report = Report::where('classroom_id', $classroom->id)->with(['period', 'student', 'classroom'])->get();
+
+        return response()->json(['data' => $report]);
     }
 
     /**
@@ -70,7 +70,7 @@ class WaliKelasController extends Controller
             'course_id' => 'required|exists:courses,id',
             'score' => 'required|numeric|min:0|max:100',
         ]);
-        
+
         // Proteksi bisa ditambahkan di sini untuk memastikan report_id milik muridnya
 
         $item = ReportItem::updateOrCreate(

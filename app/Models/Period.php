@@ -31,4 +31,10 @@ class Period extends Model
     {
         $this->attributes['status'] = $value;
     }
+
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class);
+    }
 }
