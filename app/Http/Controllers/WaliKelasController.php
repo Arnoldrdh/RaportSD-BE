@@ -104,6 +104,35 @@ class WaliKelasController extends Controller
         return response()->json(['message' => 'Nilai berhasil disimpan', 'data' => $item]);
     }
 
+    public function upsertStudentReport(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'report_items' => 'required|array',
+            'report_items.*.course_id' => 'required|exists:courses,id',
+            'report_items.*.grade' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $report = Report::find($id);
+
+        if (!$report) {
+            return response()->json(['message' => 'Rapot tidak ditemukan'], 404);
+        }
+
+        foreach ($validated['report_items'] as $item) {
+            ReportItem::updateOrInsert(
+                [
+                    'report_id' => $report->id,
+                    'course_id' => $item['course_id'],
+                ],
+                [
+                    'grade' => $item['grade'],
+                ]
+            );
+        }
+
+        return response()->json(['message' => 'Nilai berhasil disimpan']);
+    }
+
     private function getTaughtClassroom()
     {
         $waliKelas = Auth::user();

@@ -52,6 +52,8 @@ Route::middleware('role:wali_kelas')->prefix('walikelas')->group(function () {
     Route::get('/my-students', [WaliKelasController::class, 'getMyStudents']);
     Route::get('/report', [WaliKelasController::class, 'getStudentReport']);
     Route::get('/report/{id}', [WaliKelasController::class, 'getStudentReportById']);
+    Route::post('/report/{id}', [WaliKelasController::class, 'upsertStudentReport']);
+
     Route::post('/report/score', [WaliKelasController::class, 'saveScore']);
 });
 
