@@ -14,7 +14,7 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-
+Route::get('/all', [AuthController::class, 'getAllData']);
 
 Route::middleware(['auth:api', 'role:kepala_sekolah'])->prefix('kepala-sekolah')->group(function () {
 
@@ -22,21 +22,28 @@ Route::middleware(['auth:api', 'role:kepala_sekolah'])->prefix('kepala-sekolah')
     Route::get('/unvalidated-users', [ControllerKepalaSekolah::class, 'listUnvalidatedUser']);
     Route::patch('/users/{id}', [ControllerKepalaSekolah::class, 'updateUser']);
 
-    // Manajemen Kelas
-    Route::get('/show-kelas', [ControllerKepalaSekolah::class, 'showKelas']); // lihat semua kelas
-    Route::get('/kelas/{id}', [ControllerKepalaSekolah::class, 'getKelas']); // lihat kelas
-    Route::post('/kelas', [ControllerKepalaSekolah::class, 'addKelas']); // tambah kelas
-    Route::put('/kelas/{id}', [ControllerKepalaSekolah::class, 'updateKelas']); // edit kelas
-    Route::delete('/kelas/{id}', [ControllerKepalaSekolah::class, 'deleteKelas']); // hapus kelas
+    // 🏫 Manajemen Kelas
+    Route::get('/show-kelas', [ControllerKepalaSekolah::class, 'showKelas']);
+    Route::get('/kelas/{id}', [ControllerKepalaSekolah::class, 'getKelas']);
+    Route::post('/kelas', [ControllerKepalaSekolah::class, 'addKelas']);
+    Route::put('/kelas/{id}', [ControllerKepalaSekolah::class, 'updateKelas']);
+    Route::delete('/kelas/{id}', [ControllerKepalaSekolah::class, 'deleteKelas']);
 
-    // Tambah route lain (mata pelajaran, periode, dll) bisa di sini
+    // 👩‍🎓 Manajemen Murid di Kelas
+    Route::post('/kelas/assign-student', [ControllerKepalaSekolah::class, 'assignStudentToClass']); // tambah murid ke kelas
+    Route::post('/kelas/move-student', [ControllerKepalaSekolah::class, 'moveStudent']); // pindah murid ke kelas lain
+
+    // 📚 Manajemen Mata Pelajaran
+    Route::get('/courses', [ControllerKepalaSekolah::class, 'listCourse']); // lihat
+    Route::post('/courses', [ControllerKepalaSekolah::class, 'addCourse']); // tambah
+    Route::put('/courses/{id}', [ControllerKepalaSekolah::class, 'updateCourse']); // edit
+    Route::delete('/courses/{id}', [ControllerKepalaSekolah::class, 'deleteCourse']); // hapus (dengan proteksi periode aktif)
+
+    // 📆 Manajemen Periode
+    Route::post('/periods', [ControllerKepalaSekolah::class, 'addPeriod']); // tambah
+    Route::put('/periods/{id}', [ControllerKepalaSekolah::class, 'updatePeriod']); // edit status
+    Route::delete('/periods/{id}', [ControllerKepalaSekolah::class, 'deletePeriod']); // hapus periode pending saja
 });
-
-//buat testing aja
-Route::get('/show-kelas', [ControllerKepalaSekolah::class, 'showKelas']);
-Route::post('/add-kelas', [ControllerKepalaSekolah::class, 'addKelas']);
-Route::put('/update-kelas/{id}', [ControllerKepalaSekolah::class, 'updateKelas']);
-Route::delete('/delete-kelas/{id}', [ControllerKepalaSekolah::class, 'deleteKelas']);
 
 //Wali kelas Geys
 Route::middleware('role:wali_kelas')->prefix('walikelas')->group(function () {
