@@ -56,6 +56,14 @@ class AuthController extends Controller
         ]);
     }
 
+    //get all data
+    public function getAllData()
+    {
+        return response()->json([
+            User::all()
+        ]);
+    }
+
     //logout
     public function logout()
     {

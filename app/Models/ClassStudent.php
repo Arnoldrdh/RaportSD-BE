@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class ClassStudent extends Model
 {
-    protected $table = 'class_students'; // Sesuai dengan nama tabel di database
+    protected $table = 'class_students';
 
     protected $fillable = ['user_id', 'classroom_id'];
 
-    public $timestamps = true; // Karena di migration kamu punya timestamps
+    public $timestamps = true; // Karena di migration  punya timestamps
 
     // Relasi ke user (siswa)
     public function user()

@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classroom;
+use App\Models\ClassStudent;
+use App\Models\Course;
+use App\Models\Period;
+use App\Models\Report;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -80,24 +84,7 @@ class ControllerKepalaSekolah extends Controller
             }
         }
 
-        // Kalau ada class_teacher, cek apakah usernya benar role wali_kelas
-        if (!empty($validated['class_teacher'])) {
-            $user = User::find($request['class_teacher']);
-
-            if (!$user) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'User tidak ditemukan'
-                ], 404);
-            }
-
-            if ($user->role !== 'wali_kelas') {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'User yang dipilih bukan wali kelas'
-                ], 403);
-            }
-        }
+        
 
         //create kelas baru
         $kelas = Classroom::create([
@@ -148,6 +135,13 @@ class ControllerKepalaSekolah extends Controller
             ], 400);
         }
 
+        if(Period::where('status', 'aktif')->exists()){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tidak bisa menghapus kelas saat ada periode aktif'
+            ], 403);
+        }
+
         $dataClass->delete();
 
         return response()->json([
@@ -157,13 +151,13 @@ class ControllerKepalaSekolah extends Controller
     }
 
 
-    //logic manajement murid
+    //manajement murid
 
     //tambah murid ke kelas
     public function assignStudentToClass(Request $request)
     {
         $request->validate([
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => 'required|exists:classrooms,id',
             'user_id' => 'required|exists:users,id',
         ]);
 
@@ -171,7 +165,7 @@ class ControllerKepalaSekolah extends Controller
         $user = User::findOrFail($request->user_id);
 
         // Cek apakah user adalah murid
-        if ($user->role !== 'siswa') {
+        if ($user->role !== 'murid') {
             return response()->json(['error' => 'User bukan siswa'], 403);
         }
 
@@ -186,6 +180,177 @@ class ControllerKepalaSekolah extends Controller
         return response()->json(['message' => 'Siswa berhasil ditambahkan ke kelas'], 200);
     }
 
-    //update murid di kelas (belum)
+    //update murid di kelas 
+    public function moveStudent(Request $request)
+    {
+        $request->validate([
+        'student_id' => 'required|exists:users,id',
+        'new_class_id' => 'required|exists:classrooms,id',
+        ]);
+
+        $studentId = $request->student_id;
+        $newClassId = $request->new_class_id;
+
+        // Ambil data user
+        $student = User::findOrFail($studentId);
+        if ($student->role !== 'siswa') {
+            return response()->json(['message' => 'User bukan siswa'], 403);
+        }
+
+        // Ambil record class_students terakhir (asumsi satu murid hanya 1 kelas)
+        $currentClassStudent = ClassStudent::where('user_id', $studentId)->first();
+
+        if (!$currentClassStudent) {
+            return response()->json(['message' => 'Siswa belum tergabung di kelas manapun'], 404);
+        }
+
+        // Cek apakah periode aktif ada
+        $activePeriod = Period::where('status', 'aktif')->first();
+        if ($activePeriod) {
+            $reportExists = Report::where('user_id', $studentId)
+                ->where('class_id', $currentClassStudent->classroom_id)
+                ->where('period_id', $activePeriod->id)
+                ->exists();
+
+            if ($reportExists) {
+                return response()->json(['message' => 'Siswa tidak bisa dipindah karena sudah punya rapot di periode aktif'], 403);
+            }
+        }
+
+        // Update ke kelas baru
+        $currentClassStudent->update([
+            'classroom_id' => $newClassId
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Siswa berhasil dipindahkan ke kelas baru'
+        ], 200);
+    }
+
+    //mamanagement Mata Pelajaran
+    public function listCourse()
+    {
+        return response()->json([
+            'status' => 'success',
+            'data' => Course::all()
+        ]);
+    }
+
+    public function addCourse(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|unique:courses,name'
+        ]);
+
+        $course = Course::create(['name' => $request->name]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Mata pelajaran berhasil ditambahkan',
+            'data' => $course
+        ], 201);
+    }
+
+    public function updateCourse(Request $request, $id)
+    {
+        $course = Course::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|unique:courses,name,' . $id
+        ]);
+
+        $course->update(['name' => $request->name]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Mata pelajaran berhasil diperbarui',
+            'data' => $course
+        ]);
+    }
+
+    public function deleteCourse($id)
+    {
+        // Proteksi: tidak boleh hapus jika ada periode aktif
+        if (Period::where('status', 'aktif')->exists()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tidak bisa menghapus mata pelajaran saat ada periode aktif'
+            ], 403);
+        }
+
+        $course = Course::findOrFail($id);
+        $course->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Mata pelajaran berhasil dihapus'
+        ]);
+    }
+    
+
+    //management periode
+
+    public function addPeriod(Request $request)
+    {
+        $request->validate([
+            'year' => 'required|integer',
+            'semester' => 'required',
+        ]);
+
+        // Cek duplikat
+        if (Period::where('year', $request->year)->where('semester', $request->semester)->exists()) {
+            return response()->json(['message' => 'Periode sudah ada.'], 400);
+        }
+
+        $period = Period::create([
+            'year' => $request->year,
+            'semester' => $request->semester,
+            'status' => 'pending'
+        ]);
+
+        return response()->json(['message' => 'Periode berhasil ditambahkan.', 'data' => $period], 201);
+    }
+
+    public function updatePeriod(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:aktif,pending, selesai'
+        ]);
+
+        $period = Period::findOrFail($id);
+
+        // Jika ingin aktifkan, pastikan tidak ada periode lain yang aktif
+        if ($request->status == 'aktif') {
+            if (Period::where('status', 'aktif')->where('id', '!=', $id)->exists()) {
+                return response()->json(['message' => 'Hanya boleh satu periode aktif'], 400);
+            }
+        }
+
+        // Tidak bisa edit kalau sudah selesai
+        if ($period->status === 'selesai') {
+            return response()->json(['message' => 'Periode selesai tidak bisa diedit'], 403);
+        }
+
+        $period->status = $request->status;
+        $period->save();
+
+        return response()->json(['message' => 'Periode diperbarui']);
+    }
+
+    public function deletePeriod($id)
+    {
+        $period = Period::findOrFail($id);
+
+        if ($period->status !== 'pending') {
+            return response()->json(['message' => 'Hanya periode pending yang bisa dihapus'], 403);
+        }
+
+        $period->delete();
+
+        return response()->json(['message' => 'Periode berhasil dihapus']);
+    }
+
+
 
 }
