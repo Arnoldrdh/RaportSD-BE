@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classroom;
-use App\Models\ClassStudent;
-use App\Models\Report;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -189,57 +187,5 @@ class ControllerKepalaSekolah extends Controller
     }
 
     //update murid di kelas (belum)
-    public function updateMuridKelas(Request $request)
-    {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'new_class_id' => 'required|exists:classrooms,id',
-        ]);
 
-        $userId = $request->user_id;
-        $newClassId = $request->new_class_id;
-
-        // Ambil entri ClassStudent lama
-        $currentClassEntry = ClassStudent::where('user_id', $userId)->first();
-
-        // Jika tidak ada data sebelumnya
-        if (!$currentClassEntry) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Siswa belum terdaftar di kelas manapun',
-            ], 404);
-        }
-
-        // Cek apakah siswa sudah memiliki rapor di kelas saat ini
-        $hasReport = Report::where('user_id', $userId)
-            ->where('class_id', $currentClassEntry->classroom_id)
-            ->exists();
-
-        if ($hasReport) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Siswa sudah memiliki rapor di kelas saat ini dan tidak dapat dipindahkan',
-            ], 403);
-        }
-
-        // Update classroom_id ke kelas baru
-        $currentClassEntry->classroom_id = $newClassId;
-        $currentClassEntry->save();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Siswa berhasil dipindahkan ke kelas baru',
-        ], 200);
-    }
-
-
-    public function listTeacher()
-    {
-        $data = User::where('role', 'wali_kelas')->get();
-
-        return response()->json([
-            'message' => 'success',
-            'data' => $data
-        ], 200);
-    }
 }
