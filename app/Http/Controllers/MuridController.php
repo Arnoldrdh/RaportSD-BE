@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,9 +13,9 @@ class MuridController extends Controller
     {
         $murid = Auth::user();
 
-        $history = $murid->reports()
-            ->with(['period', 'classroom', 'items.course'])
-            ->orderBy('created_at', 'desc') 
+        $history = Report::where('user_id', $murid->id)
+            ->with(['period', 'classroom'])
+            ->orderBy('created_at', 'desc')
             ->get();
 
         if ($history->isEmpty()) {
