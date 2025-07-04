@@ -84,24 +84,7 @@ class ControllerKepalaSekolah extends Controller
             }
         }
 
-        // Kalau ada class_teacher, cek apakah usernya benar role wali_kelas
-        if (!empty($validated['class_teacher'])) {
-            $user = User::find($request['class_teacher']);
 
-            if (!$user) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'User tidak ditemukan'
-                ], 404);
-            }
-
-            if ($user->role !== 'wali_kelas') {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'User yang dipilih bukan wali kelas'
-                ], 403);
-            }
-        }
 
         //create kelas baru
         $kelas = Classroom::create([
@@ -166,7 +149,6 @@ class ControllerKepalaSekolah extends Controller
             'message' => 'Kelas berhasil dihapus'
         ], 200);
     }
-
 
     //manajement murid
 
