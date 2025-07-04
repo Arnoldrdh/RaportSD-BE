@@ -47,8 +47,11 @@ Route::middleware(['auth:api', 'role:kepala_sekolah'])->prefix('kepala-sekolah')
 
 //Wali kelas Geys
 Route::middleware('role:wali_kelas')->prefix('walikelas')->group(function () {
+    Route::get('/courses', [WaliKelasController::class, 'listCourses']);
+
     Route::get('/my-students', [WaliKelasController::class, 'getMyStudents']);
     Route::get('/report', [WaliKelasController::class, 'getStudentReport']);
+    Route::get('/report/{id}', [WaliKelasController::class, 'getStudentReportById']);
     Route::post('/report/score', [WaliKelasController::class, 'saveScore']);
 });
 

@@ -28,7 +28,7 @@ class Report extends Model
         return $this->belongsTo(Classroom::class);
     }
 
-    public function items()
+    public function reportItems()
     {
         return $this->hasMany(ReportItem::class);
     }

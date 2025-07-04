@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('course_id')->references('id')->on('courses');
             $table->foreignId('report_id')->references('id')->on('reports');
+            $table->integer('grade')->max(100)->min(0);
             $table->timestamps();
         });
     }

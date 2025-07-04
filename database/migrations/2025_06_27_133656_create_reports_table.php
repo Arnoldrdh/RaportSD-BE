@@ -13,18 +13,17 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('reports', function (Blueprint $table) {
-        $table->id();
+    {
+        Schema::create('reports', function (Blueprint $table) {
+            $table->id();
 
-        $table->foreignId('period_id')->constrained('periods');
-        $table->foreignId('classroom_id')->constrained('classrooms');
-        $table->foreignId('user_id')->constrained('users'); 
-
-        $table->text('notes')->nullable();
-        $table->timestamps();
-    });
-}
+            $table->foreignId('period_id')->constrained('periods');
+            $table->foreignId('classroom_id')->constrained('classrooms');
+            $table->foreignId('user_id')->constrained('users');
+            $table->text('notes')->nullable();
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.
