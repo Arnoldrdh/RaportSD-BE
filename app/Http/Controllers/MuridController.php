@@ -27,4 +27,19 @@ class MuridController extends Controller
 
         return response()->json(['data' => $history]);
     }
+
+    public function getReportById($id)
+    {
+        $murid = Auth::user();
+        $report = Report::where('id', $id)->with(['reportItems.course', 'period', 'classroom', 'student'])->first();
+
+        if ($report->student->id !== $murid->id) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki akses ke rapot ini.',
+                'data' => []
+            ], 403);
+        }
+
+        return response()->json(['data' => $report]);
+    }
 }

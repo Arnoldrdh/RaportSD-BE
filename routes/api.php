@@ -60,4 +60,5 @@ Route::middleware('role:wali_kelas')->prefix('walikelas')->group(function () {
 //Nek iki murid
 Route::middleware('role:murid')->prefix('murid')->group(function () {
     Route::get('/history', [MuridController::class, 'getReportHistory']);
+    Route::get('/history/{id}', [MuridController::class, 'getReportById']);
 });
