@@ -111,10 +111,19 @@ class ControllerKepalaSekolah extends Controller
             'grade' => 'required|integer|min:1|max:6',
             'code' => 'required|string|size:1',
             'year' => 'required|integer',
+            'class_teacher' => 'nullable|exists:users,id'
         ]);
 
+        $report = Report::where('classroom_id', $id)->first();
+
+        if ($report) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Kelas tidak bisa diubah karena sudah terdaftar di rapot'
+            ], 400);
+        }
         //update kelas
-        $dataClass->update($request->only(['grade', 'code', 'year']));
+        $dataClass->update($request->only(['grade', 'code', 'year', 'class_teacher']));
         return response()->json([
             'status' => 'success',
             'message' => 'Kelas berhasil diperbarui',
@@ -152,6 +161,29 @@ class ControllerKepalaSekolah extends Controller
 
     //manajement murid
 
+    public function listStudents()
+    {
+        $students = User::where('role', 'murid')
+            ->with(['classStudents.classroom'])
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $students
+        ]);
+    }
+
+    public function getStudent($id)
+    {
+        $student = User::where('role', 'murid')
+            ->with(['classStudents.classroom'])
+            ->findOrFail($id);
+        return response()->json([
+            'status' => 'success',
+            'data' => $student
+        ]);
+    }
+
     //tambah murid ke kelas
     public function assignStudentToClass(Request $request)
     {
@@ -180,44 +212,23 @@ class ControllerKepalaSekolah extends Controller
     }
 
     //update murid di kelas 
-    public function moveStudent(Request $request)
+    public function moveStudent(Request $request, $studentId)
     {
         $request->validate([
-            'student_id' => 'required|exists:users,id',
-            'new_class_id' => 'required|exists:classrooms,id',
+            'class_id' => 'required|exists:classrooms,id',
         ]);
 
-        $studentId = $request->student_id;
-        $newClassId = $request->new_class_id;
+        $newClassId = $request->class_id;
 
         // Ambil data user
         $student = User::findOrFail($studentId);
-        if ($student->role !== 'siswa') {
+        if ($student->role !== 'murid') {
             return response()->json(['message' => 'User bukan siswa'], 403);
         }
 
-        // Ambil record class_students terakhir (asumsi satu murid hanya 1 kelas)
-        $currentClassStudent = ClassStudent::where('user_id', $studentId)->first();
-
-        if (!$currentClassStudent) {
-            return response()->json(['message' => 'Siswa belum tergabung di kelas manapun'], 404);
-        }
-
-        // Cek apakah periode aktif ada
-        $activePeriod = Period::where('status', 'aktif')->first();
-        if ($activePeriod) {
-            $reportExists = Report::where('user_id', $studentId)
-                ->where('class_id', $currentClassStudent->classroom_id)
-                ->where('period_id', $activePeriod->id)
-                ->exists();
-
-            if ($reportExists) {
-                return response()->json(['message' => 'Siswa tidak bisa dipindah karena sudah punya rapot di periode aktif'], 403);
-            }
-        }
-
-        // Update ke kelas baru
-        $currentClassStudent->update([
+        ClassStudent::updateOrInsert([
+            'user_id' => $studentId,
+        ], [
             'classroom_id' => $newClassId
         ]);
 
@@ -233,6 +244,15 @@ class ControllerKepalaSekolah extends Controller
         return response()->json([
             'status' => 'success',
             'data' => Course::all()
+        ]);
+    }
+    public function getCourse($id)
+    {
+        $course = Course::findOrFail($id);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $course
         ]);
     }
 
@@ -270,14 +290,6 @@ class ControllerKepalaSekolah extends Controller
 
     public function deleteCourse($id)
     {
-        // Proteksi: tidak boleh hapus jika ada periode aktif
-        if (Period::where('status', 'aktif')->exists()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Tidak bisa menghapus mata pelajaran saat ada periode aktif'
-            ], 403);
-        }
-
         $course = Course::findOrFail($id);
         $course->delete();
 
@@ -289,6 +301,26 @@ class ControllerKepalaSekolah extends Controller
 
 
     //management periode
+
+    public function listPeriod()
+    {
+        $period = Period::all();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $period
+        ]);
+    }
+
+    public function getPeriod($id)
+    {
+        $period = Period::findOrFail($id);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $period
+        ]);
+    }
 
     public function addPeriod(Request $request)
     {
@@ -314,7 +346,7 @@ class ControllerKepalaSekolah extends Controller
     public function updatePeriod(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:aktif,pending, selesai'
+            'status' => 'required|in:aktif,pending,selesai'
         ]);
 
         $period = Period::findOrFail($id);
@@ -324,6 +356,20 @@ class ControllerKepalaSekolah extends Controller
             if (Period::where('status', 'aktif')->where('id', '!=', $id)->exists()) {
                 return response()->json(['message' => 'Hanya boleh satu periode aktif'], 400);
             }
+
+            // generate rapot untuk semua murid berdasarkan class_students
+            $classStudents = ClassStudent::all();
+            foreach ($classStudents as $classStudent) {
+                $report = Report::create([
+                    'user_id' => $classStudent->user_id,
+                    'classroom_id' => $classStudent->classroom_id,
+                    'period_id' => $id,
+                ]);
+            }
+        }
+
+        if ($request->status === 'selesai') {
+            ClassStudent::truncate();
         }
 
         // Tidak bisa edit kalau sudah selesai
@@ -423,5 +469,11 @@ class ControllerKepalaSekolah extends Controller
             'message' => 'success',
             'data' => $data
         ], 200);
+    }
+
+    private function isPeriodActive()
+    {
+        $period = Period::where('status', 'aktif')->first();
+        return $period ? true : false;
     }
 }

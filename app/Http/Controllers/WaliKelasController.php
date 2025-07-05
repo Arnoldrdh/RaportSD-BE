@@ -18,8 +18,16 @@ class WaliKelasController extends Controller
     public function getMyStudents()
     {
         $classrooms = $this->getTaughtClassroom();
+        $activePeriod = $this->getActivePeriod();
 
-        $report = Report::whereIn('classroom_id', $classrooms->pluck('id'))->with(['period', 'student', 'classroom'])->get();
+        if (!$activePeriod) {
+            return response()->json(['data' => []]);
+        }
+
+        $report = Report::whereIn('classroom_id', $classrooms->pluck('id'))
+            ->where('period_id', $activePeriod->id)
+            ->with(['period', 'student', 'classroom'])
+            ->get();
 
         return response()->json(['data' => $report]);
     }
@@ -60,11 +68,11 @@ class WaliKelasController extends Controller
 
     public function getStudentReportById($id)
     {
-        $classroom = $this->getTaughtClassroom();
+        $classrooms = $this->getTaughtClassroom();
 
         $report = Report::with(['reportItems.course', 'period', 'student', 'classroom'])->find($id);
 
-        if ($report->classroom_id !== $classroom->id) {
+        if (!$classrooms->pluck('id')->contains($report->classroom_id)) {
             return response()->json(['message' => 'Akses ditolak. Rapot ini bukan milik kelas Anda.'], 403);
         }
 
@@ -137,8 +145,15 @@ class WaliKelasController extends Controller
     {
         $waliKelas = Auth::user();
 
-        $classroom = Classroom::where('class_teacher', $waliKelas->id)->first();
+        $classrooms = Classroom::where('class_teacher', $waliKelas->id)->get();
 
-        return $classroom;
+        return $classrooms;
+    }
+
+    private function getActivePeriod()
+    {
+        $period = Period::where('status', 'aktif')->first();
+
+        return $period;
     }
 }

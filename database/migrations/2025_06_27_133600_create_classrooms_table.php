@@ -20,6 +20,7 @@ return new class extends Migration
             //referenre FK to user role teacher
             $table->foreignId('class_teacher')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

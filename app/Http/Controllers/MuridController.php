@@ -14,7 +14,15 @@ class MuridController extends Controller
         $murid = Auth::user();
 
         $history = Report::where('user_id', $murid->id)
-            ->with(['period', 'classroom'])
+            ->whereHas('period', function ($query) {
+                $query->where('status', '!=', 'aktif');
+            })
+            ->with([
+                'period',
+                'classroom' => function ($query) {
+                    $query->withTrashed();
+                }
+            ])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -31,7 +39,18 @@ class MuridController extends Controller
     public function getReportById($id)
     {
         $murid = Auth::user();
-        $report = Report::where('id', $id)->with(['reportItems.course', 'period', 'classroom', 'student'])->first();
+
+
+        $report = Report::where('id', $id)->with([
+            'reportItems.course' => function ($query) {
+                $query->withTrashed();
+            },
+            'classroom' => function ($query) {
+                $query->withTrashed();
+            },
+            'period',
+            'student'
+        ])->first();
 
         if ($report->student->id !== $murid->id) {
             return response()->json([

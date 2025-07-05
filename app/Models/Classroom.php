@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Classroom extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'grade',
         'year',
@@ -22,6 +25,11 @@ class Classroom extends Model
     {
         return $this->belongsToMany(User::class, 'class_students', 'classroom_id', 'user_id')
             ->withTimestamps();
+    }
+
+    public function classStudents()
+    {
+        return $this->hasMany(ClassStudent::class, 'classroom_id');
     }
 
     public function reports()
